@@ -1,6 +1,7 @@
 import { Server } from "http";
 import app from "./app";
 import dbConfig from "./config/db.config";
+import { seedSuperAdmin } from "./utils/seedSuperAdmin";
 
 async function travelBuddyServer() {
   let server: Server;
@@ -59,4 +60,8 @@ async function travelBuddyServer() {
 }
 
 // Start the server
-travelBuddyServer();
+
+(async () => {
+  await travelBuddyServer();
+  await seedSuperAdmin();
+})();

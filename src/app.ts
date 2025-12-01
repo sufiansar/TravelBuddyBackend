@@ -1,33 +1,41 @@
-import compression from "compression";
+import express, { Application, NextFunction, Request, Response } from "express";
 import cors from "cors";
-import express from "express";
+import cookieParser from "cookie-parser";
+import router from "./routes/route";
+import dbConfig from "./config/db.config";
+import notFound from "./middleware/notFound";
+import globalErrorHandler from "./middleware/globalErrorHandler";
 
-const app = express();
-
-// Middleware
-app.use(cors()); // Enables Cross-Origin Resource Sharing
-app.use(compression()); // Compresses response bodies for faster delivery
-app.use(express.json()); // Parse incoming JSON requests
+// import { sanitizeInput } from "./app/middlewares/sanitizeInput";
+const app: Application = express();
 
 app.use(
   cors({
     origin: "http://localhost:3000",
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// Default route for testing
-app.get("/", (_req, res) => {
-  res.send("API is running");
-});
+//parser
+app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 
+app.use("/api/v1", router);
 
-// 404 Handler
-app.use((req, res, next) => {
-  res.status(404).json({
-    success: false,
-    message: "Route Not Found",
+app.get("/", (req: Request, res: Response) => {
+  res.send({
+    message: "Server is running..",
+    environment: dbConfig.node_env,
+    uptime: process.uptime().toFixed(2) + " sec",
+    timeStamp: new Date().toISOString(),
   });
 });
+
+app.use(globalErrorHandler);
+
+app.use(notFound);
 
 export default app;

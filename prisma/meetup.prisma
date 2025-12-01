@@ -1,0 +1,28 @@
+model Meetup {
+  id           String      @id @default(uuid())
+  title        String
+  location     String
+  date         DateTime
+  description  String?
+  maxPeople    Int?
+  hostId       String
+  host         User        @relation("HostMeetups", fields: [hostId], references: [id])
+  participants MeetupMember[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  @@map("meetups")
+}
+
+
+model MeetupMember {
+  id         String    @id @default(uuid())
+  joinedAt   DateTime  @default(now())
+  meetupId   String
+  userId     String
+  meetup     Meetup    @relation(fields: [meetupId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
+  @@unique([meetupId, userId])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  @@map("meetupMembers")
+}

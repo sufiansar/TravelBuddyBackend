@@ -1,0 +1,52 @@
+model TravelPlan {
+  id            String      @id @default(uuid())
+  destination   String
+  startDate     DateTime
+  endDate       DateTime
+  minBudget     Int?
+  maxBudget     Int?
+  travelType    TravelType
+  description   String?
+  isPublic      PlanVisibility @default(PUBLIC)
+  latitude      Float?
+  longitude     Float?
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  matches       TravelMatch[]
+  requests      TravelPlanRequest[]
+  reviews       Review[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  @@index([destination])
+  @@index([startDate, endDate])
+  @@map("travelPlans")
+}
+
+
+
+model TravelMatch {
+  id           String      @id @default(uuid())
+  matchScore   Int
+  travelPlanId String
+  travelPlan   TravelPlan  @relation(fields: [travelPlanId], references: [id])
+  matchedUserId String
+  matchedUser    User      @relation("UserMatches", fields: [matchedUserId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+}
+
+
+model TravelPlanRequest {
+  id            String        @id @default(uuid())
+  message       String?
+  status        RequestStatus @default(PENDING)
+  travelPlanId  String
+  travelPlan    TravelPlan    @relation(fields: [travelPlanId], references: [id])
+  requesterId   String
+  requester     User          @relation(fields: [requesterId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([travelPlanId, requesterId])
+}
