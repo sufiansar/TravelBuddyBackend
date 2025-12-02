@@ -22,6 +22,11 @@ model User {
   meetupMembers     MeetupMember[]
   planRequests      TravelPlanRequest[]
   subscription      Subscription?
+  posts             Post[]
+  postreactions     PostReaction[]
+  postsaves         PostSave[]
+  postshares        PostShare[]
+  postcomments      PostComment[]
   payments          Payment[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt

@@ -1,0 +1,66 @@
+model Post {
+  id        String   @id @default(uuid())
+  content   String?
+  images    String[]
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  reactions PostReaction[]
+  saves     PostSave[]
+  shares    PostShare[]
+  postComments PostComment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("posts")
+}
+
+model PostReaction {
+  id           String       @id @default(uuid())
+  type         ReactionType
+  postId       String
+  post         Post         @relation(fields: [postId], references: [id])
+  userId       String
+  user         User         @relation(fields: [userId], references: [id])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([postId, userId])
+  @@map("postReactions")
+}
+
+model PostSave {
+  id        String   @id @default(uuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@map("postSaves")
+}
+
+model PostShare {
+  id        String   @id @default(uuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  message   String?
+  createdAt DateTime @default(now())
+
+  @@map("postShares")
+}
+
+model PostComment {
+  id        String   @id @default(uuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("postComments")
+}

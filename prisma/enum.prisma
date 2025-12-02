@@ -46,3 +46,11 @@ enum RequestStatus {
   ACCEPTED
   REJECTED
 }
+
+enum ReactionType {
+  LIKE
+  LOVE
+  WOW
+  SAD
+  ANGRY
+}

@@ -1,5 +1,3 @@
-// Matches
-
 import { Router } from "express";
 import checkAuth from "../../middleware/checkAuth";
 import { TravelMatchController } from "./travelMatch.controller";
@@ -10,6 +8,7 @@ router.post(
   checkAuth(),
   TravelMatchController.generateMatches
 );
+router.get("/", checkAuth(), TravelMatchController.getAllMatches);
 router.get(
   "/:id/matches",
   checkAuth(),

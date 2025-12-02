@@ -1,5 +1,3 @@
-// services/travelPlan.service.ts
-
 import { prisma } from "../../config/prisma";
 import { ITravelPlan } from "./travelPlan.interface";
 import { Ioptions, paginationHelper } from "../../utils/paginationHelper";
@@ -34,7 +32,6 @@ export const createTravelPlan = async (
 
   return travelPlan;
 };
-
 const getAllTravelPlans = async (filters: any, options: Ioptions) => {
   const { page, limit, skip, sortBy, sortOrder } =
     paginationHelper.calculatePagination(options);
@@ -141,7 +138,6 @@ const deleteTravelPlan = async (id: string, user: any) => {
   const deleted = await prisma.travelPlan.delete({ where: { id } });
   return deleted;
 };
-
 const requestToJoin = async (
   travelPlanId: string,
   user: any,
@@ -225,5 +221,3 @@ export const TravelPlanService = {
   getRequestsForOwner,
   respondToRequest,
 };
-
-

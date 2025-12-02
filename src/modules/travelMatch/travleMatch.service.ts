@@ -1,5 +1,7 @@
 import { prisma } from "../../config/prisma";
 import { UserRole } from "../../generated/prisma/enums";
+import { paginationHelper, Ioptions } from "../../utils/paginationHelper";
+import { Prisma } from "../../generated/prisma/client";
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -87,8 +89,6 @@ const getMatchesForPlan = async (travelPlanId: string, user: any) => {
     where: { id: travelPlanId },
   });
   if (!plan) throw new Error("Travel plan not found");
-  //   if (plan.userId !== user.id && user.role !== UserRole.ADMIN)
-  //     throw new Error("Not authorized to view matches for this plan");
 
   const matches = await prisma.travelMatch.findMany({
     where: { travelPlanId },
@@ -118,9 +118,58 @@ const deleteMatch = async (matchId: string, user: any) => {
   return { success: true };
 };
 
+const getAllMatches = async (filters: any = {}, options: Ioptions = {}) => {
+  const { page, limit, skip, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(options);
+
+  const { searchTerm, ...filterData } = filters;
+  const andConditions: Prisma.TravelMatchWhereInput[] = [];
+  if (searchTerm) {
+    // allow search by matched user's name or travel plan destination
+    andConditions.push({
+      OR: [
+        {
+          matchedUser: {
+            fullName: { contains: searchTerm, mode: "insensitive" },
+          },
+        },
+        {
+          travelPlan: {
+            destination: { contains: searchTerm, mode: "insensitive" },
+          },
+        },
+      ],
+    });
+  }
+
+  if (Object.keys(filterData).length > 0) {
+    andConditions.push({
+      AND: Object.keys(filterData).map((key) => ({
+        [key]: { equals: (filterData as any)[key] },
+      })),
+    });
+  }
+
+  const where: Prisma.TravelMatchWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
+  const data = await prisma.travelMatch.findMany({
+    where,
+    include: { matchedUser: true, travelPlan: { include: { user: true } } },
+    skip,
+    take: limit,
+    orderBy: { [sortBy]: sortOrder },
+  });
+
+  const total = await prisma.travelMatch.count({ where });
+
+  return { meta: { page, limit, total }, data };
+};
+
 export const TravelMatchService = {
   generateMatches,
   getMatchesForPlan,
   getMatchesForUser,
   deleteMatch,
+  getAllMatches,
 };

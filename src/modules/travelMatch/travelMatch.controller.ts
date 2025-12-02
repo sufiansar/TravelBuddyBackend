@@ -3,6 +3,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { TravelMatchService } from "./travleMatch.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status-codes";
+import pick from "../../utils/pick";
 
 const generateMatches = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -44,6 +45,27 @@ const getMatchesForUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllMatches = catchAsync(async (req: Request, res: Response) => {
+  const filters = pick(req.query, [
+    "travelPlanId",
+    "matchedUserId",
+    "searchTerm",
+  ]);
+  const options = pick(req.query, ["page", "limit", "sortBy", "sortOrder"]);
+
+  const result = await (TravelMatchService as any).getAllMatches(
+    filters,
+    options
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Matches fetched",
+    data: result,
+  });
+});
+
 const deleteMatch = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params; // this is match id
   const user = (req as any).user;
@@ -63,4 +85,5 @@ export const TravelMatchController = {
   getMatchesForPlan,
   getMatchesForUser,
   deleteMatch,
+  getAllMatches,
 };

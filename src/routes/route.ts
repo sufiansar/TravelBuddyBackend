@@ -3,6 +3,8 @@ import { UserRoutes } from "../modules/user/user.route";
 import { AuthRouters } from "../modules/auth/auth.route";
 import { TravelPlanRoutes } from "../modules/travelPlan/travelPlan.route";
 import { TravelMatchRoutes } from "../modules/travelMatch/travleMatch.route";
+import { MeetupRoutes } from "../modules/meetup/meetup.route";
+import { PostRoutes } from "../modules/post/post.route";
 const router = express.Router();
 const moduleRoutes = [
   {
@@ -20,6 +22,14 @@ const moduleRoutes = [
   {
     path: "/travelMatches",
     route: TravelMatchRoutes,
+  },
+  {
+    path: "/meetups",
+    route: MeetupRoutes,
+  },
+  {
+    path: "/posts",
+    route: PostRoutes,
   },
 ];
 
