@@ -3,14 +3,14 @@ import { ReactionType } from "../../generated/prisma/enums";
 import { paginationHelper, Ioptions } from "../../utils/paginationHelper";
 import { Prisma } from "../../generated/prisma/client";
 
-export const createPost = async (data: any, files: any[], user: any) => {
+const createPost = async (data: any, files: any[], user: any) => {
   const images: string[] = (files || []).map(
     (f: any) => f.path || f.secure_url || f.url || f.location || ""
   );
 
   const post = await prisma.post.create({
     data: {
-      content: data.content ?? null,
+      content: data.content,
       images,
       userId: user.id,
     },
@@ -18,7 +18,7 @@ export const createPost = async (data: any, files: any[], user: any) => {
   });
   return post;
 };
-export const getPosts = async (filters: any = {}, options: Ioptions = {}) => {
+const getPosts = async (filters: any = {}, options: Ioptions = {}) => {
   const { page, limit, skip, sortBy, sortOrder } =
     paginationHelper.calculatePagination(options);
 
@@ -61,7 +61,7 @@ export const getPosts = async (filters: any = {}, options: Ioptions = {}) => {
 
   return { meta: { page, limit, total }, data };
 };
-export const getSinglePost = async (id: string) => {
+const getSinglePost = async (id: string) => {
   const post = await prisma.post.findUnique({
     where: { id },
     include: {
@@ -96,11 +96,7 @@ const getMyPosts = async (user: any, options: Ioptions = {}) => {
 
   return { meta: { page, limit, total }, data };
 };
-export const reactToPost = async (
-  postId: string,
-  user: any,
-  type: ReactionType
-) => {
+const reactToPost = async (postId: string, user: any, type: ReactionType) => {
   // upsert reaction
   const existing = await prisma.postReaction
     .findUnique({ where: { postId_userId: { postId, userId: user.id } } })
@@ -118,12 +114,12 @@ export const reactToPost = async (
   return created;
 };
 
-export const removeReaction = async (postId: string, user: any) => {
+const removeReaction = async (postId: string, user: any) => {
   await prisma.postReaction.deleteMany({ where: { postId, userId: user.id } });
   return { success: true };
 };
 
-export const savePost = async (postId: string, user: any) => {
+const savePost = async (postId: string, user: any) => {
   const exists = await prisma.postSave
     .findUnique({ where: { postId_userId: { postId, userId: user.id } } })
     .catch(() => null);
@@ -134,7 +130,7 @@ export const savePost = async (postId: string, user: any) => {
   return created;
 };
 
-export const unsavePost = async (postId: string, user: any) => {
+const unsavePost = async (postId: string, user: any) => {
   await prisma.postSave.deleteMany({ where: { postId, userId: user.id } });
   return { success: true };
 };
@@ -150,7 +146,7 @@ export const sharePost = async (
   return created;
 };
 
-export const getSavedPostsForUser = async (userId: string) => {
+const getSavedPostsForUser = async (userId: string) => {
   const saved = await prisma.postSave.findMany({
     where: { userId },
     include: { post: { include: { user: true } } },
@@ -158,11 +154,7 @@ export const getSavedPostsForUser = async (userId: string) => {
   return saved;
 };
 
-export const createComment = async (
-  postId: string,
-  user: any,
-  content: string
-) => {
+const createComment = async (postId: string, user: any, content: string) => {
   const post = await prisma.post.findUnique({ where: { id: postId } });
   if (!post) throw new Error("Post not found");
 
@@ -173,7 +165,7 @@ export const createComment = async (
   return comment;
 };
 
-export const getComments = async (postId: string, options: Ioptions = {}) => {
+const getComments = async (postId: string, options: Ioptions = {}) => {
   const { page, limit, skip, sortBy, sortOrder } =
     paginationHelper.calculatePagination(options);
 
@@ -212,7 +204,7 @@ export const updateComment = async (
   return updated;
 };
 
-export const deleteComment = async (commentId: string, user: any) => {
+const deleteComment = async (commentId: string, user: any) => {
   const comment = await prisma.postComment.findUnique({
     where: { id: commentId },
     include: { post: true },

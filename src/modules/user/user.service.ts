@@ -1,6 +1,11 @@
 import dbConfig from "../../config/db.config";
 import { prisma } from "../../config/prisma";
-import { User, UserRole, Prisma } from "../../generated/prisma/client";
+import {
+  User,
+  UserRole,
+  Prisma,
+  PlanVisibility,
+} from "../../generated/prisma/client";
 import { paginationHelper, Ioptions } from "../../utils/paginationHelper";
 import { UserSearchAbleFields } from "./user.constant";
 
@@ -105,6 +110,66 @@ const getSingleUser = async (userId: string) => {
   return user;
 };
 
+const getPublicProfile = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      fullName: true,
+      username: true,
+      profileImage: true,
+      bio: true,
+      interests: true,
+      visitedCountries: true,
+      currentLocation: true,
+      verifiedBadge: true,
+      createdAt: true,
+    },
+  });
+
+  if (!user) {
+    throw new AppError(404, "User not found");
+  }
+
+  // upcoming public travel plans
+  const upcomingPlans = await prisma.travelPlan.findMany({
+    where: {
+      userId,
+      isPublic: PlanVisibility.PUBLIC,
+      endDate: { gte: new Date() },
+    },
+    orderBy: { startDate: "asc" },
+    take: 5,
+  });
+
+  // recent reviews (received)
+  const recentReviews = await prisma.review.findMany({
+    where: { receiverId: userId },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    include: {
+      reviewer: {
+        select: { id: true, fullName: true, profileImage: true },
+      },
+    },
+  });
+
+  // average rating
+  const avg = await prisma.review.aggregate({
+    where: { receiverId: userId },
+    _avg: { rating: true },
+  });
+
+  const averageRating = avg._avg?.rating ?? null;
+
+  return {
+    user,
+    upcomingPlans,
+    recentReviews,
+    averageRating,
+  };
+};
+
 const deleteUser = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -158,10 +223,14 @@ const updateUser = async (
     throw new AppError(404, "User not found");
   }
 
+  // If file is uploaded, extract the Cloudinary URL
+  const profileImage = file?.path || userData.profileImage || user.profileImage;
+
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
       ...userData,
+      profileImage,
     },
   });
 
@@ -172,6 +241,7 @@ export const UserService = {
   createUser,
   getAllUsers,
   getSingleUser,
+  getPublicProfile,
   updateRoleforAdmin,
   deleteUser,
   deleteAdmin,

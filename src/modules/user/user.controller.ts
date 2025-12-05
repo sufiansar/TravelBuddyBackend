@@ -44,6 +44,17 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getPublicProfile = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.params.id;
+  const result = await UserService.getPublicProfile(userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Public profile retrieved successfully",
+    data: result,
+  });
+});
+
 const updateRoleforAdmin = catchAsync(async (req: Request, res: Response) => {
   const userId = req.params.id;
   const { role } = req.body;
@@ -95,6 +106,7 @@ export const UserController = {
   createUser,
   getAllUsers,
   getSingleUser,
+  getPublicProfile,
   updateRoleforAdmin,
   deleteUser,
   deleteAdmin,

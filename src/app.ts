@@ -2,12 +2,30 @@ import express, { Application, NextFunction, Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import router from "./routes/route";
+import { webhookHandler } from "./modules/payment/payment.webhook";
 import dbConfig from "./config/db.config";
 import notFound from "./middleware/notFound";
 import globalErrorHandler from "./middleware/globalErrorHandler";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import mongoSanitize from "express-mongo-sanitize";
 
-// import { sanitizeInput } from "./app/middlewares/sanitizeInput";
 const app: Application = express();
+
+app.use(helmet());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Too many requests from this IP, please try again later",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api", limiter);
+
+// Input sanitization
+app.use(mongoSanitize());
 
 app.use(
   cors({
@@ -16,6 +34,13 @@ app.use(
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
+);
+
+// Stripe webhook (raw body) must be registered before JSON parser
+app.post(
+  "/api/v1/payments/webhook",
+  express.raw({ type: "application/json" }),
+  (req: Request, res: Response) => webhookHandler(req, res)
 );
 
 //parser

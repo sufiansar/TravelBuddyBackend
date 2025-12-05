@@ -9,8 +9,9 @@ import { PostPaginationableFields } from "./post.constant";
 const create = catchAsync(async (req: Request, res: Response) => {
   const user = (req as any).user;
   const files = (req as any).files as any[];
-  const data = req.body;
-  const post = await PostService.createPost(data, files, user);
+  const content = (req.body.content as string) || null;
+  const post = await PostService.createPost({ content }, files, user);
+
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,

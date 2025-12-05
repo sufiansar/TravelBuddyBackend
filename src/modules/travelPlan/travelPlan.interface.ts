@@ -1,4 +1,4 @@
-// interfaces/travelPlan.interface.ts
+
 
 import { PlanVisibility, TravelType } from "../../generated/prisma/enums";
 

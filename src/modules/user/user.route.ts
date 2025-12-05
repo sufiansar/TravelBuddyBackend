@@ -4,10 +4,12 @@ import { validateRequest } from "../../middleware/validateRequest";
 import { UserSchema } from "./user.validation";
 import checkAuth from "../../middleware/checkAuth";
 import { UserRole } from "../../generated/prisma/enums";
+import { multerUpload } from "../../config/multer.congig";
 
 const router = Router();
 
 router.get("/", UserController.getAllUsers);
+router.get("/public/:id", UserController.getPublicProfile);
 router.get("/:id", UserController.getSingleUser);
 router.post(
   "/create-user",
@@ -32,7 +34,15 @@ router.delete(
 );
 router.patch(
   "/update-user/:id",
-  validateRequest(UserSchema),
+  checkAuth(),
+  multerUpload.single("profileImage"),
+  UserController.updateUser
+);
+
+router.patch(
+  "/upload-profile-image/:id",
+  checkAuth(),
+  multerUpload.single("profileImage"),
   UserController.updateUser
 );
 
