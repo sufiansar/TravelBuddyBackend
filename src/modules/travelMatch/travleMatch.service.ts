@@ -12,8 +12,8 @@ const generateMatches = async (travelPlanId: string, user: any) => {
       include: { user: true },
     });
     if (!plan) throw new Error("Travel plan not found");
-    if (plan.userId !== user.id && user.role !== UserRole.ADMIN)
-      throw new Error("Not authorized to generate matches for this plan");
+    // if (plan.userId !== user.id && user.role !== UserRole.ADMIN)
+    //   throw new Error("Not authorized to generate matches for this plan");
 
     const candidates = await tx.travelPlan.findMany({
       where: {
@@ -158,7 +158,7 @@ const getAllMatches = async (filters: any = {}, options: Ioptions = {}) => {
     include: { matchedUser: true, travelPlan: { include: { user: true } } },
     skip,
     take: limit,
-    orderBy: { [sortBy]: sortOrder },
+    // orderBy: { [sortBy]: sortOrder },
   });
 
   const total = await prisma.travelMatch.count({ where });

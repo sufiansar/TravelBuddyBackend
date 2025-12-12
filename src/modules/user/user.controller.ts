@@ -58,7 +58,15 @@ const getPublicProfile = catchAsync(async (req: Request, res: Response) => {
 const updateRoleforAdmin = catchAsync(async (req: Request, res: Response) => {
   const userId = req.params.id;
   const { role } = req.body;
-  const result = await UserService.updateRoleforAdmin(userId, role);
+
+  const loggedInUser = req.user; // this is SUPER_ADMIN
+
+  const result = await UserService.updateRoleforAdmin(
+    userId,
+    role,
+    loggedInUser
+  );
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

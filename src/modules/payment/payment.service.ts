@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import dbConfig from "../../config/db.config";
 import { prisma } from "../../config/prisma";
+import { sendEmail } from "../../utils/sendMail";
 
 const stripe = new Stripe(dbConfig.stripe.stripe_secret_key || "", {
   //   apiVersion: "2022-11-15",
@@ -44,80 +45,6 @@ const createCheckoutSession = async (userId: string, plan: Plan) => {
   return session;
 };
 
-// const handleCheckoutSession = async (session: Stripe.Checkout.Session) => {
-//   const metadata: any = session.metadata || {};
-//   const userId = metadata.userId as string | undefined;
-//   const plan = (metadata.plan as Plan) || ("MONTHLY" as Plan);
-
-//   if (!userId) {
-//     throw new Error("Session missing userId metadata");
-//   }
-
-//   const amount = (session.amount_total || getPlanAmount(plan)) as number;
-//   const transactionId = session.id as string;
-
-//   // Idempotency: if a payment with this transactionId already exists, return early
-//   const existingPayment = await prisma.payment.findUnique({
-//     where: { transactionId },
-//   });
-//   if (existingPayment) {
-//     // find related subscription and return it
-//     const subscription = await prisma.subscription.findUnique({
-//       where: { id: existingPayment.subscriptionId || "" },
-//     });
-//     return { subscription };
-//   }
-
-//   const startDate = new Date();
-//   const endDate = new Date(startDate);
-//   if (plan === "YEARLY") {
-//     endDate.setFullYear(endDate.getFullYear() + 1);
-//   } else {
-//     endDate.setDate(endDate.getDate() + 30);
-//   }
-
-//   const result = await prisma.$transaction(async (tx) => {
-//     const subscription = await tx.subscription.upsert({
-//       where: { userId },
-//       update: {
-//         plan,
-//         startDate,
-//         endDate,
-//         isActive: true,
-//         price: amount,
-//       },
-//       create: {
-//         plan,
-//         startDate,
-//         endDate,
-//         isActive: true,
-//         price: amount,
-//         userId,
-//       },
-//     });
-
-//     const payment = await tx.payment.create({
-//       data: {
-//         amount,
-//         status: "SUCCESS",
-//         transactionId,
-//         purpose: `Subscription ${plan}`,
-//         userId,
-//         subscriptionId: subscription.id,
-//       },
-//     });
-
-//     const user = await tx.user.update({
-//       where: { id: userId },
-//       data: { verifiedBadge: true },
-//     });
-
-//     return { subscription, payment, user };
-//   });
-
-//   return { subscription: result.subscription };
-// };
-
 const handleCheckoutSession = async (session: Stripe.Checkout.Session) => {
   console.log("=== handleCheckoutSession START ===");
   console.log("Session ID:", session.id);
@@ -136,6 +63,8 @@ const handleCheckoutSession = async (session: Stripe.Checkout.Session) => {
 
   const amount = (session.amount_total || getPlanAmount(plan)) as number;
   const transactionId = session.id as string;
+  const paymentIntentId = session.payment_intent as string | null;
+  const stripeSubscriptionId = session.subscription as string | null;
 
   // Idempotency check
   const existingPayment = await prisma.payment.findUnique({
@@ -172,6 +101,7 @@ const handleCheckoutSession = async (session: Stripe.Checkout.Session) => {
           endDate,
           isActive: true,
           price: amount,
+          stripeSubscriptionId: stripeSubscriptionId || undefined,
         },
         create: {
           plan,
@@ -180,6 +110,7 @@ const handleCheckoutSession = async (session: Stripe.Checkout.Session) => {
           isActive: true,
           price: amount,
           userId,
+          stripeSubscriptionId: stripeSubscriptionId || undefined,
         },
       });
       console.log("Subscription created/updated:", subscription.id);
@@ -189,6 +120,8 @@ const handleCheckoutSession = async (session: Stripe.Checkout.Session) => {
           amount,
           status: "SUCCESS",
           transactionId,
+          stripePaymentIntentId: paymentIntentId || undefined,
+          stripeSessionId: session.id,
           purpose: `Subscription ${plan}`,
           userId,
           subscriptionId: subscription.id,
@@ -264,6 +197,33 @@ const verifyAndProcessSession = async (sessionId: string) => {
 
   // Process the session (same logic as webhook)
   const result = await handleCheckoutSession(session);
+
+  // Send invoice email after successful payment
+  if (result.user?.email && result.subscription && session.amount_total) {
+    try {
+      const amount = (session.amount_total || 0) / 100;
+      await sendEmail({
+        to: result.user.email,
+        subject: "Your TravelBuddy Subscription Invoice",
+        templateName: "invoice",
+        templateData: {
+          transactionId: session.id,
+          createdAt: new Date().toISOString(),
+          planLabel: (session.metadata?.plan || "MONTHLY").toUpperCase(),
+          totalAmount: amount,
+          customerName: result.user.fullName || "TravelBuddy User",
+          customerEmail: result.user.email,
+          supportEmail: dbConfig.smtp.smtp_from || dbConfig.smtp.smtp_user,
+          supportUrl: process.env.CLIENT_URL || "https://travelbuddy.app",
+          logoUrl:
+            process.env.LOGO_URL ||
+            "https://res.cloudinary.com/demo/image/upload/travelbuddy-logo.png",
+        },
+      });
+    } catch (err) {
+      console.error("Failed to send invoice email", err);
+    }
+  }
 
   console.log("=== verifyAndProcessSession END ===");
   console.log("Final result:", {

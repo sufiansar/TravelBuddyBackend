@@ -38,24 +38,22 @@ const createUser = async (user: IUser, file: any) => {
   return createdUser;
 };
 
-const updateRoleforAdmin = async (userId: string, role: UserRole) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!user) {
-    throw new AppError(404, "User not found");
+const updateRoleforAdmin = async (
+  userId: string,
+  role: UserRole,
+  loggedInUser: any
+) => {
+  // Check logged-in user's role
+  if (loggedInUser.role === UserRole.USER) {
+    throw new AppError(403, "Only SUPER_ADMIN and Admin can update admin role");
   }
 
-  if (user.role === UserRole.USER) {
-    throw new AppError(403, "Only SUPER_ADMIN And Admin can update admin role");
-  }
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError(404, "User not found");
 
   const updatedUser = await prisma.user.update({
     where: { id: userId },
-    data: {
-      role,
-    },
+    data: { role },
   });
 
   return updatedUser;

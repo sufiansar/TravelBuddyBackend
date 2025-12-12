@@ -5,12 +5,14 @@ import { generateToken, verifyToken } from "./jwt";
 import dbConfig from "../config/db.config";
 import AppError from "../errorHelper/ApiError";
 import { prisma } from "../config/prisma";
+import { IUser } from "../modules/user/user.interface";
+import { UserStatus } from "../generated/prisma/enums";
 
 export const createUserTokens = (user: Partial<IUser>) => {
   const jwtPayload = {
-    userId: user._id,
-    email: user.email,
-    role: user.role,
+    id: user.id as string,
+    email: user.email as string,
+    role: user.role as string,
   };
   const accessToken = generateToken(
     jwtPayload,
@@ -45,21 +47,9 @@ export const createNewAccessTokenWithRefreshToken = async (
   if (!isUserExist) {
     throw new AppError(httpStatus.BAD_REQUEST, "User does not exist");
   }
-  if (
-    isUserExist.isActive === UserStatus.BLOCKED ||
-    isUserExist.isActive === UserStatus.INACTIVE
-  ) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      `User is ${isUserExist.isActive}`
-    );
-  }
-  if (isUserExist.isDeleted) {
-    throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
-  }
 
   const jwtPayload = {
-    userId: isUserExist._id,
+    id: isUserExist.id,
     email: isUserExist.email,
     role: isUserExist.role,
   };

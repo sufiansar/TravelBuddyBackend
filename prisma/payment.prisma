@@ -1,14 +1,16 @@
 model Payment {
-  id              String        @id @default(uuid())
-  amount          Int
-  status          PaymentStatus @default(PENDING)
-  transactionId   String?       @unique
-  purpose         String?       
-  userId          String
-  user            User          @relation(fields: [userId], references: [id])
-  subscriptionId  String?
-  subscription    Subscription? @relation(fields: [subscriptionId], references: [id])
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id                String        @id @default(uuid())
+  amount            Int
+  status            PaymentStatus @default(PENDING)
+  transactionId     String?       @unique
+  stripePaymentIntentId String?   @unique // Stripe payment_intent.id
+  stripeSessionId   String?       @unique // Stripe checkout session.id
+  purpose           String?       
+  userId            String
+  user              User          @relation(fields: [userId], references: [id])
+  subscriptionId    String?
+  subscription      Subscription? @relation(fields: [subscriptionId], references: [id])
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
   @@map("payments")
 }

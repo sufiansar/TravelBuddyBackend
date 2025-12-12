@@ -7,8 +7,6 @@ import { prisma } from "../../config/prisma";
 const webhookSecret = dbConfig.stripe.stripe_webhook_secret;
 const stripe = PaymentService.stripe;
 
-const processedEvents = new Set<string>();
-
 export const webhookHandler = async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"] as string | undefined;
   const rawBody = Buffer.isBuffer(req.body)
@@ -31,10 +29,19 @@ export const webhookHandler = async (req: Request, res: Response) => {
       .send(`Webhook signature verification failed: ${err?.message || err}`);
   }
 
-  // Basic idempotency
-  if (processedEvents.has(event.id)) {
-    console.log(`Event ${event.id} already processed, skipping`);
-    return res.json({ received: true, idempotent: true });
+  // Database-backed idempotency check
+  try {
+    const existingEvent = await prisma.stripeEvent.findUnique({
+      where: { eventId: event.id },
+    });
+
+    if (existingEvent) {
+      console.log(`Event ${event.id} already processed, skipping`);
+      return res.json({ received: true, idempotent: true });
+    }
+  } catch (err) {
+    console.error("Error checking event idempotency:", err);
+    return res.status(500).send("Error checking event idempotency");
   }
 
   try {
@@ -122,8 +129,13 @@ export const webhookHandler = async (req: Request, res: Response) => {
       }
     }
 
-    // Mark event processed in-memory
-    processedEvents.add(event.id);
+    // Mark event as processed in database
+    await prisma.stripeEvent.create({
+      data: {
+        eventId: event.id,
+        eventType: event.type,
+      },
+    });
     console.log(`Event ${event.id} processed successfully`);
   } catch (err) {
     console.error("webhook processing error:", err);

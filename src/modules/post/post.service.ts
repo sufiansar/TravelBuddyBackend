@@ -44,18 +44,29 @@ const getPosts = async (filters: any = {}, options: Ioptions = {}) => {
   const where: Prisma.PostWhereInput =
     andConditions.length > 0 ? { AND: andConditions } : {};
 
-  const data = await prisma.post.findMany({
+  const postsWithCounts = await prisma.post.findMany({
     where,
     include: {
       user: true,
       reactions: { include: { user: true } },
       saves: { include: { user: true } },
       shares: { include: { user: true } },
+      postComments: { include: { user: true } },
     },
     orderBy: { [sortBy]: sortOrder },
     take: limit,
     skip,
   });
+
+  const data = postsWithCounts.map((post) => ({
+    ...post,
+    _count: {
+      comments: post.postComments?.length || 0,
+      reactions: post.reactions?.length || 0,
+      saves: post.saves?.length || 0,
+      shares: post.shares?.length || 0,
+    },
+  }));
 
   const total = await prisma.post.count({ where });
 
@@ -69,9 +80,21 @@ const getSinglePost = async (id: string) => {
       reactions: { include: { user: true } },
       saves: { include: { user: true } },
       shares: { include: { user: true } },
+      postComments: true,
     },
   });
-  return post;
+
+  if (!post) return null;
+
+  return {
+    ...post,
+    _count: {
+      comments: post.postComments?.length || 0,
+      reactions: post.reactions?.length || 0,
+      saves: post.saves?.length || 0,
+      shares: post.shares?.length || 0,
+    },
+  };
 };
 const getMyPosts = async (user: any, options: Ioptions = {}) => {
   const { page, limit, skip, sortBy, sortOrder } =
@@ -79,22 +102,68 @@ const getMyPosts = async (user: any, options: Ioptions = {}) => {
 
   const where: Prisma.PostWhereInput = { userId: user.id };
 
-  const data = await prisma.post.findMany({
+  const postsWithCounts = await prisma.post.findMany({
     where,
     include: {
       user: true,
       reactions: { include: { user: true } },
       saves: { include: { user: true } },
       shares: { include: { user: true } },
+      postComments: true,
     },
     orderBy: { [sortBy]: sortOrder },
     take: limit,
     skip,
   });
 
+  const data = postsWithCounts.map((post) => ({
+    ...post,
+    _count: {
+      comments: post.postComments?.length || 0,
+      reactions: post.reactions?.length || 0,
+      saves: post.saves?.length || 0,
+      shares: post.shares?.length || 0,
+    },
+  }));
+
   const total = await prisma.post.count({ where });
 
   return { meta: { page, limit, total }, data };
+};
+
+const updatePost = async (
+  postId: string,
+  user: any,
+  content: string | null,
+  files: any[]
+) => {
+  const post = await prisma.post.findUnique({ where: { id: postId } });
+  if (!post) throw new Error("Post not found");
+  if (post.userId !== user.id)
+    throw new Error("Not authorized to update this post");
+
+  const images: string[] = (files || []).map(
+    (f: any) => f.path || f.secure_url || f.url || f.location || ""
+  );
+
+  const updated = await prisma.post.update({
+    where: { id: postId },
+    data: {
+      content: content !== null ? content : post.content,
+      images: images.length > 0 ? images : post.images,
+    },
+    include: { user: true },
+  });
+  return updated;
+};
+const deletePost = async (postId: string, user: any) => {
+  const post = await prisma.post.findUnique({ where: { id: postId } });
+  if (!post) throw new Error("Post not found");
+  if (post.userId !== user.id)
+    throw new Error("Not authorized to delete this post");
+
+  await prisma.post.delete({ where: { id: postId } });
+  return { success: true };
 };
 const reactToPost = async (postId: string, user: any, type: ReactionType) => {
   // upsert reaction
@@ -232,4 +301,6 @@ export const PostService = {
   getComments,
   updateComment,
   deleteComment,
+  updatePost,
+  deletePost,
 };

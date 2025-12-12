@@ -168,10 +168,18 @@ const resetPassword = catchAsync(async (req, res) => {
   });
 });
 
-const getMyProfile = catchAsync(async (req, res) => {
-  const userSession = req.cookies;
+const getMyProfile = catchAsync(async (req: Request, res: Response) => {
+  const accessToken = req.cookies.accessToken;
 
-  const result = await AuthService.getMyProfile(userSession);
+  if (!accessToken) {
+    res.status(401).json({
+      success: false,
+      message: "Access token not found. Please login first.",
+    });
+    return;
+  }
+
+  const result = await AuthService.getMyProfile(accessToken);
   sendResponse(res, {
     statusCode: 200,
     success: true,

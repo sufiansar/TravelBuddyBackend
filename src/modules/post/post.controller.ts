@@ -33,6 +33,33 @@ const getPosts = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const updatePost = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const user = (req as any).user;
+  const content = (req.body.content as string) || null;
+  const files = (req as any).files as any[];
+
+  const updatedPost = await PostService.updatePost(id, user, content, files);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Post updated",
+    data: updatedPost,
+  });
+});
+
+const deletePost = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const user = (req as any).user;
+  const result = await PostService.deletePost(id, user);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Post deleted",
+    data: result,
+  });
+});
+
 const getMyPosts = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
   const options = pick(req.query, PostPaginationableFields);
@@ -199,4 +226,6 @@ export const PostController = {
   getComments,
   updateComment,
   deleteComment,
+  updatePost,
+  deletePost,
 };

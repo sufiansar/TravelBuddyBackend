@@ -1,15 +1,16 @@
 model Subscription {
-  id           String             @id @default(uuid())
-  plan         SubscriptionPlan
-  startDate    DateTime           @default(now())
-  endDate      DateTime
-  isActive     Boolean            @default(true)
-  price        Int?
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id])
-  payments     Payment[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id                  String             @id @default(uuid())
+  plan                SubscriptionPlan
+  startDate           DateTime           @default(now())
+  endDate             DateTime
+  isActive            Boolean            @default(true)
+  price               Int?
+  stripeSubscriptionId String?           @unique // Stripe subscription.id
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id])
+  payments            Payment[]
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
   @@map("subscriptions")
 }

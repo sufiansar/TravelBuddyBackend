@@ -21,6 +21,24 @@ const createTravelPlan = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
+const getMyPlans = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  const filters = pick(req.query, TravleFilterableFields);
+  const options = pick(req.query, TravelPlanpaginationableFields);
+
+  if (!userId) throw new Error("Unauthorized: User not logged in");
+
+  const result = await TravelPlanService.getMyPlans(userId, filters, options);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "My travel plans retrieved successfully",
+    data: result,
+  });
+});
+
 const getAllTravelPlans = catchAsync(async (req: Request, res: Response) => {
   const filters = pick(req.query, TravleFilterableFields);
   const options = pick(req.query, TravelPlanpaginationableFields);
@@ -130,6 +148,7 @@ const respondToRequest = catchAsync(async (req: Request, res: Response) => {
 export const TravelPlanController = {
   createTravelPlan,
   getAllTravelPlans,
+  getMyPlans,
   getSingleTravelPlan,
   updateTravelPlan,
   deleteTravelPlan,

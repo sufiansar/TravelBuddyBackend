@@ -11,11 +11,15 @@ interface LoginPayload {
   password: string;
 }
 const login = async (payload: LoginPayload) => {
-  const userData = await prisma.user.findUniqueOrThrow({
+  const userData = await prisma.user.findUnique({
     where: {
       email: payload.email,
     },
   });
+
+  if (!userData) {
+    throw new Error("Invalid email or password!");
+  }
 
   if (userData.userStatus !== UserStatus.ACTIVE) {
     throw new Error("User is not active.");
@@ -27,7 +31,7 @@ const login = async (payload: LoginPayload) => {
   );
 
   if (!isCorrectPassword) {
-    throw new Error("Password incorrect!");
+    throw new Error("Invalid email or password!");
   }
 
   const accessToken = generateToken(
@@ -166,8 +170,7 @@ const changePassword = async (user: any, payload: any) => {
   };
 };
 
-const getMyProfile = async (user: any) => {
-  const accessToken = user.accessToken;
+const getMyProfile = async (accessToken: string) => {
   const decodedData: any = verifyToken(
     accessToken,
     dbConfig.jwt.accessToken_secret as string

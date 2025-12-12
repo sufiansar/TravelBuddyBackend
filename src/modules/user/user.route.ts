@@ -19,7 +19,6 @@ router.post(
 router.patch(
   "/update-role/:id",
   checkAuth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
-  validateRequest(UserSchema),
   UserController.updateRoleforAdmin
 );
 router.delete(
@@ -40,7 +39,7 @@ router.patch(
 );
 
 router.patch(
-  "/upload-profile-image/:id",
+  "/update-user/:id",
   checkAuth(),
   multerUpload.single("profileImage"),
   UserController.updateUser

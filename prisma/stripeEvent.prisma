@@ -1,0 +1,9 @@
+model StripeEvent {
+  id            String   @id @default(uuid())
+  eventId       String   @unique // Stripe event.id
+  eventType     String   // e.g., checkout.session.completed
+  processed     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@map("stripe_events")
+}

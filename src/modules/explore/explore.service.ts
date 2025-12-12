@@ -131,7 +131,6 @@ const exploreTravelers = async (
     }),
   ]);
 
-  // Get upcoming public plans and avg rating for each user
   const data = await Promise.all(
     users.map(async (user) => {
       const [upcomingPlans, avgRating] = await Promise.all([

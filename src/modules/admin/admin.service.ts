@@ -3,7 +3,6 @@ import { Prisma, UserRole, UserStatus } from "../../generated/prisma/client";
 import { paginationHelper, Ioptions } from "../../utils/paginationHelper";
 import AppError from "../../errorHelper/ApiError";
 
-// Admin: List all users with filters
 const getAllUsersAdmin = async (filters: any = {}, options: Ioptions = {}) => {
   const { page, limit, skip, sortBy, sortOrder } =
     paginationHelper.calculatePagination(options);

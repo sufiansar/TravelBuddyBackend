@@ -9,6 +9,8 @@ router.post(
   checkAuth(),
   TravelPlanController.createTravelPlan
 );
+
+router.get("/my-plans", checkAuth(), TravelPlanController.getMyPlans);
 router.get("/", TravelPlanController.getAllTravelPlans);
 router.get("/:id", TravelPlanController.getSingleTravelPlan);
 router.patch("/:id", checkAuth(), TravelPlanController.updateTravelPlan);

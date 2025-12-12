@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>TravelBuddy Invoice</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #0f8b8d;
+        --secondary: #eef7f6;
+        --text: #123037;
+        --border: #e0e6ed;
+        --success: #28a745;
+        --danger: #dc3545;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background: var(--secondary);
+        color: var(--text);
+        margin: 0;
+        padding: 40px;
+      }
+
+      .invoice-box {
+        max-width: 850px;
+        background: white;
+        padding: 40px;
+        margin: auto;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid var(--primary);
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+      }
+
+      .logo {
+        height: 60px;
+      }
+
+      h2 {
+        margin: 0;
+        color: var(--primary);
+        font-weight: 600;
+      }
+
+      .company-info,
+      .bill-to,
+      .invoice-meta {
+        margin-top: 30px;
+        line-height: 1.7;
+        font-size: 0.95rem;
+      }
+
+      .invoice-meta {
+        text-align: right;
+      }
+
+      .info-grid {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 30px;
+      }
+
+      thead {
+        background: var(--primary);
+        color: white;
+      }
+
+      th,
+      td {
+        padding: 14px;
+        border: 1px solid var(--border);
+        text-align: left;
+        font-size: 0.95rem;
+      }
+
+      .totals {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 40px;
+      }
+
+      .totals table {
+        width: 350px;
+        border: none;
+        background: #f9fbff;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .totals td {
+        padding: 12px 16px;
+        border: none;
+      }
+
+      .totals tr:not(:last-child) {
+        border-bottom: 1px solid #dfe6f0;
+      }
+
+      .totals td:first-child {
+        color: #555;
+      }
+
+      .totals td:last-child {
+        text-align: right;
+        font-weight: 500;
+      }
+
+      .totals tr:last-child td {
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .notes {
+        background: #f0f4f9;
+        padding: 18px 20px;
+        border-left: 4px solid var(--primary);
+        margin-top: 40px;
+        font-size: 0.95rem;
+        color: #444;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 50px;
+        font-size: 0.85rem;
+        color: #888;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="invoice-box">
+      <div class="header">
+        <div>
+          <h2>INVOICE</h2>
+          <div class="company-info">
+            <strong>TravelBuddy</strong><br />
+            Support: <%= supportEmail || "support@travelbuddy.com" %><br />
+            Website: <%= supportUrl || "https://travelbuddy.app" %><br />
+            Dhaka, Bangladesh
+          </div>
+        </div>
+        <% if (logoUrl) { %>
+        <img class="logo" src="<%= logoUrl %>" alt="TravelBuddy" />
+        <% } %>
+      </div>
+
+      <div class="info-grid">
+        <div class="bill-to">
+          <strong>Bill To:</strong><br />
+          <%= customerName || "TravelBuddy User" %><br />
+          <%= customerEmail %>
+        </div>
+
+        <div class="invoice-meta">
+          <p><strong>Invoice No:</strong> <%= transactionId %></p>
+          <p>
+            <strong>Date:</strong> <%= new Date(createdAt).toDateString() %>
+          </p>
+          <p><strong>Plan:</strong> <%= planLabel %></p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SUB-<%= planLabel %></td>
+            <td>TravelBuddy <%= planLabel %> Subscription</td>
+            <td>1</td>
+            <td>$<%= Number(totalAmount).toFixed(2) %></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <table>
+          <tr>
+            <td>Subtotal:</td>
+            <td>$<%= Number(totalAmount).toFixed(2) %></td>
+          </tr>
+          <tr>
+            <td>Tax (Flat):</td>
+            <td>$0.00</td>
+          </tr>
+          <tr>
+            <td>Discount (10%):</td>
+            <td>$0.00</td>
+          </tr>
+          <tr>
+            <td>Total:</td>
+            <td>$<%= Number(totalAmount).toFixed(2) %></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="notes">
+        <strong>Note:</strong> Thank you for supporting TravelBuddy. Your
+        subscription keeps the community thriving. If you have any questions,
+        reach us at <%= supportEmail || "support@travelbuddy.com" %>.
+      </div>
+
+      <div class="footer">This invoice was generated by TravelBuddy.</div>
+    </div>
+  </body>
+</html>

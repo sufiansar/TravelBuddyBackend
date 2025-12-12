@@ -12,24 +12,27 @@ import mongoSanitize from "express-mongo-sanitize";
 
 const app: Application = express();
 
-app.use(helmet());
+// app.use(helmet());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: "Too many requests from this IP, please try again later",
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use("/api", limiter);
+// // Rate limiting
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000,
+//   max: 100,
+//   message: "Too many requests from this IP, please try again later",
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
+// app.use("/api", limiter);
 
-// Input sanitization
-app.use(mongoSanitize());
+// // Input sanitization
+// app.use(mongoSanitize());
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: [
+      "http://localhost:3000",
+      "https://travel-buddy-frontend-red.vercel.app",
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

@@ -12,6 +12,13 @@ router.post(
 );
 router.get("/", PostController.getPosts);
 router.get("/:id", PostController.single);
+router.patch(
+  "/:id",
+  checkAuth(),
+  multerUpload.array("images", 10),
+  PostController.updatePost
+);
+router.delete("/:id", checkAuth(), PostController.deletePost);
 router.post("/:id/react", checkAuth(), PostController.react);
 router.delete("/:id/unreact", checkAuth(), PostController.unreact);
 router.post("/:id/save", checkAuth(), PostController.save);

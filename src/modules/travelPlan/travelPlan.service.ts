@@ -32,11 +32,52 @@ export const createTravelPlan = async (
 
   return travelPlan;
 };
+
+const getMyPlans = async (userId: string, filter: any, options: Ioptions) => {
+  const { page, limit, skip, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(options);
+
+  const where: Prisma.TravelPlanWhereInput = {
+    userId,
+    ...filter,
+  };
+
+  const data = await prisma.travelPlan.findMany({
+    where,
+    orderBy: { [sortBy]: sortOrder },
+    take: limit,
+    skip,
+    include: {
+      matches: { include: { matchedUser: true } },
+      requests: { include: { requester: true } },
+      reviews: true,
+    },
+  });
+
+  const total = await prisma.travelPlan.count({ where });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data,
+  };
+};
+
 const getAllTravelPlans = async (filters: any, options: Ioptions) => {
   const { page, limit, skip, sortBy, sortOrder } =
     paginationHelper.calculatePagination(options);
 
   const { searchTerm, ...filterData } = filters;
+
+  const numericFields = ["minBudget", "maxBudget"];
+  Object.keys(filterData).forEach((key) => {
+    if (numericFields.includes(key) && filterData[key]) {
+      filterData[key] = Number(filterData[key]);
+    }
+  });
 
   const andConditions: Prisma.TravelPlanWhereInput[] = [];
   if (searchTerm) {
@@ -213,6 +254,7 @@ const respondToRequest = async (
 };
 export const TravelPlanService = {
   createTravelPlan,
+  getMyPlans,
   getAllTravelPlans,
   getSingleTravelPlan,
   updateTravelPlan,

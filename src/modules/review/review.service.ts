@@ -2,27 +2,35 @@ import { prisma } from "../../config/prisma";
 import { Ioptions, paginationHelper } from "../../utils/paginationHelper";
 
 const createReview = async (payload: any, reviewerId: string) => {
+  let receiverId = payload.receiverId;
+
   if (payload.travelPlanId) {
+    // find travel plan and its owner
     const travelPlan = await prisma.travelPlan.findUnique({
       where: { id: payload.travelPlanId },
-      select: { endDate: true },
+      select: { endDate: true, userId: true }, // <-- added userId
     });
+
     if (!travelPlan) {
       throw new Error("Associated travel plan not found");
     }
+
+    // check travel plan ended
     const now = new Date();
     if (now < travelPlan.endDate) {
       throw new Error(
         "Reviews can only be created after the travel plan has ended"
       );
     }
+
+    receiverId = travelPlan.userId;
   }
 
   const data = {
     rating: payload.rating,
     comment: payload.comment,
     reviewerId,
-    receiverId: payload.receiverId,
+    receiverId,
     travelPlanId: payload.travelPlanId || null,
   };
 
@@ -69,7 +77,7 @@ const getReviewsForPlan = async (planId: string, options: Ioptions = {}) => {
       where,
       skip,
       take: limit,
-      orderBy: { [sortBy]: sortOrder as "asc" | "desc" },
+      orderBy: { createdAt: "desc" },
       include: {
         reviewer: {
           select: {
@@ -110,7 +118,7 @@ const getReviewsForUser = async (userId: string, options: Ioptions = {}) => {
       where,
       skip,
       take: limit,
-      orderBy: { [sortBy]: sortOrder as "asc" | "desc" },
+      orderBy: { createdAt: "desc" },
       include: {
         reviewer: {
           select: {
@@ -141,7 +149,7 @@ const getAllReviews = async (options: Ioptions = {}) => {
     prisma.review.findMany({
       skip,
       take: limit,
-      orderBy: { [sortBy]: sortOrder as "asc" | "desc" },
+      orderBy: { createdAt: "desc" },
       include: {
         reviewer: {
           select: {

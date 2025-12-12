@@ -18,10 +18,22 @@ enum Gender {
 }
 
 enum TravelType {
-  SOLO
+  ADVENTURE
+  BEACH
   FRIENDS
+  CITY_TOUR
+  CULTURAL
+  HIKING
+  ROAD_TRIP
+  SKI_SNOWBOARD
+  BACKPACKING
+  LUXURY
+  BUSINESS
   FAMILY
+  SOLO
+  COUPLE
   GROUP
+  OTHER
 }
 
 enum SubscriptionPlan {

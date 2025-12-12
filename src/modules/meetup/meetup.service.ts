@@ -10,11 +10,12 @@ export const createMeetup = async (data: any, user: any) => {
       location: data.location,
       date: new Date(data.date),
       description: data.description,
-      maxPeople: data.maxPeople ?? null,
+      maxPeople: data.maxPeople ? Number(data.maxPeople) : null,
       hostId: user.id,
     },
     include: { host: true },
   });
+
   return meetup;
 };
 
