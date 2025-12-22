@@ -11,9 +11,14 @@ import { Request, Response } from "express";
 
 const createTravelPlan = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.id;
+  const file = req.file as Express.Multer.File | undefined;
   if (!userId) throw new Error("Unauthorized: User not logged in");
   const payload = req.body;
-  const result = await TravelPlanService.createTravelPlan(payload, userId);
+  const result = await TravelPlanService.createTravelPlan(
+    payload,
+    userId,
+    file
+  );
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,

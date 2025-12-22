@@ -28,6 +28,8 @@ model User {
   postshares        PostShare[]
   postcomments      PostComment[]
   payments          Payment[]
+  messagesSent      message[]      @relation("SentMessages")
+  messagesReceived  message[]      @relation("ReceivedMessages")
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   @@index([email])

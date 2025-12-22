@@ -92,8 +92,9 @@ const getAllUsers = async (filters: any = {}, options: Ioptions = {}) => {
   });
 
   const total = await prisma.user.count({ where });
+  const totalPage = Math.ceil(total / Number(limit));
 
-  return { meta: { page, limit, total }, data };
+  return { meta: { page, limit, total, totalPage }, data };
 };
 
 const getSingleUser = async (userId: string) => {
@@ -221,13 +222,27 @@ const updateUser = async (
     throw new AppError(404, "User not found");
   }
 
-  // If file is uploaded, extract the Cloudinary URL
   const profileImage = file?.path || userData.profileImage || user.profileImage;
+
+  const parseStringArray = (value: any): string[] | undefined => {
+    if (!value) return undefined;
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string") {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
+  };
 
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
       ...userData,
+      interests: parseStringArray(userData.interests),
+      visitedCountries: parseStringArray(userData.visitedCountries),
       profileImage,
     },
   });

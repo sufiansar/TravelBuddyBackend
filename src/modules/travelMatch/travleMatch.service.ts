@@ -162,8 +162,9 @@ const getAllMatches = async (filters: any = {}, options: Ioptions = {}) => {
   });
 
   const total = await prisma.travelMatch.count({ where });
+  const totalPage = Math.ceil(total / Number(limit));
 
-  return { meta: { page, limit, total }, data };
+  return { meta: { page, limit, total, totalPage }, data };
 };
 
 export const TravelMatchService = {

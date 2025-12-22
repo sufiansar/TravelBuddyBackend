@@ -6,7 +6,8 @@ import { TravleSearchAbleFields } from "./travlePlanConstant";
 
 export const createTravelPlan = async (
   payload: ITravelPlan,
-  userId: string
+  userId: string,
+  file: Express.Multer.File | undefined
 ) => {
   if (!userId) throw new Error("User ID missing from request");
 
@@ -16,17 +17,20 @@ export const createTravelPlan = async (
 
   if (!userExists) throw new Error("User not found");
 
+  const imageUrl = file?.path || payload.imageUrl || undefined;
+
   const travelPlan = await prisma.travelPlan.create({
     data: {
       destination: payload.destination,
       startDate: new Date(payload.startDate),
       endDate: new Date(payload.endDate),
-      minBudget: payload.minBudget,
-      maxBudget: payload.maxBudget,
+      minBudget: Number(payload.minBudget),
+      maxBudget: Number(payload.maxBudget),
       travelType: payload.travelType,
       description: payload.description,
       isPublic: payload.isPublic ?? "PUBLIC",
       userId: userId,
+      imageUrl: imageUrl,
     },
   });
 
@@ -51,6 +55,7 @@ const getMyPlans = async (userId: string, filter: any, options: Ioptions) => {
       matches: { include: { matchedUser: true } },
       requests: { include: { requester: true } },
       reviews: true,
+      user: true,
     },
   });
 
@@ -70,16 +75,11 @@ const getAllTravelPlans = async (filters: any, options: Ioptions) => {
   const { page, limit, skip, sortBy, sortOrder } =
     paginationHelper.calculatePagination(options);
 
-  const { searchTerm, ...filterData } = filters;
-
-  const numericFields = ["minBudget", "maxBudget"];
-  Object.keys(filterData).forEach((key) => {
-    if (numericFields.includes(key) && filterData[key]) {
-      filterData[key] = Number(filterData[key]);
-    }
-  });
+  const { searchTerm, minBudget, maxBudget, ...filterData } = filters;
 
   const andConditions: Prisma.TravelPlanWhereInput[] = [];
+
+  // Search term
   if (searchTerm) {
     andConditions.push({
       OR: TravleSearchAbleFields.map((field) => ({
@@ -91,29 +91,32 @@ const getAllTravelPlans = async (filters: any, options: Ioptions) => {
     });
   }
 
+  // Numeric budget filter
+  if (minBudget || maxBudget) {
+    if (minBudget) {
+      andConditions.push({ minBudget: { gte: Number(minBudget) } });
+    }
+    if (maxBudget) {
+      andConditions.push({ maxBudget: { lte: Number(maxBudget) } });
+    }
+  }
+
+  // Exact match filters
   if (Object.keys(filterData).length > 0) {
     andConditions.push({
       AND: Object.keys(filterData).map((key) => ({
-        [key]: {
-          equals: filterData[key],
-        },
+        [key]: filterData[key],
       })),
     });
   }
 
   const whereConditions: Prisma.TravelPlanWhereInput =
-    andConditions.length > 0
-      ? {
-          AND: andConditions,
-        }
-      : {};
+    andConditions.length > 0 ? { AND: andConditions } : {};
 
-  const appointments = await prisma.travelPlan.findMany({
+  const travelPlans = await prisma.travelPlan.findMany({
     skip,
     take: limit,
-    where: {
-      AND: whereConditions,
-    },
+    where: whereConditions,
     orderBy: {
       [sortBy]: sortOrder,
     },
@@ -121,21 +124,23 @@ const getAllTravelPlans = async (filters: any, options: Ioptions) => {
       user: true,
     },
   });
+
   const total = await prisma.travelPlan.count({
-    where: {
-      AND: whereConditions,
-    },
+    where: whereConditions,
   });
+  const totalPage = Math.ceil(total / Number(limit));
 
   return {
     meta: {
       page,
       limit,
       total,
+      totalPage,
     },
-    data: appointments,
+    data: travelPlans,
   };
 };
+
 const getSingleTravelPlan = async (id: string) => {
   const plan = await prisma.travelPlan.findUnique({
     where: { id },

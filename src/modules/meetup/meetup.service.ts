@@ -57,8 +57,9 @@ export const getAllMeetups = async (
   });
 
   const total = await prisma.meetup.count({ where });
+  const totalPage = Math.ceil(total / Number(limit));
 
-  return { meta: { page, limit, total }, data };
+  return { meta: { page, limit, total, totalPage }, data };
 };
 
 export const getSingleMeetup = async (id: string) => {
@@ -93,11 +94,14 @@ export const updateMeetup = async (id: string, data: any, user: any) => {
 export const deleteMeetup = async (id: string, user: any) => {
   const meetup = await prisma.meetup.findUnique({ where: { id } });
   if (!meetup) throw new Error("Meetup not found");
-  if (meetup.hostId !== user.id && user.role !== UserRole.ADMIN) {
+  if (
+    meetup.hostId !== user.id &&
+    user.role !== UserRole.ADMIN &&
+    user.role !== UserRole.SUPER_ADMIN
+  ) {
     throw new Error("Not authorized to delete this meetup");
   }
 
-  // remove members first to avoid constraint issues
   await prisma.meetupMember.deleteMany({ where: { meetupId: id } });
   await prisma.meetup.delete({ where: { id } });
   return { success: true };

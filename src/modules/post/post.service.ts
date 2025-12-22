@@ -69,8 +69,9 @@ const getPosts = async (filters: any = {}, options: Ioptions = {}) => {
   }));
 
   const total = await prisma.post.count({ where });
+  const totalPage = Math.ceil(total / Number(limit));
 
-  return { meta: { page, limit, total }, data };
+  return { meta: { page, limit, total, totalPage }, data };
 };
 const getSinglePost = async (id: string) => {
   const post = await prisma.post.findUnique({
@@ -127,8 +128,9 @@ const getMyPosts = async (user: any, options: Ioptions = {}) => {
   }));
 
   const total = await prisma.post.count({ where });
+  const totalPage = Math.ceil(total / Number(limit));
 
-  return { meta: { page, limit, total }, data };
+  return { meta: { page, limit, total, totalPage }, data };
 };
 
 const updatePost = async (
@@ -162,11 +164,13 @@ const deletePost = async (postId: string, user: any) => {
   if (post.userId !== user.id)
     throw new Error("Not authorized to delete this post");
 
+  // Delete post — all related reactions, saves, shares, comments are deleted automatically
   await prisma.post.delete({ where: { id: postId } });
+
   return { success: true };
 };
+
 const reactToPost = async (postId: string, user: any, type: ReactionType) => {
-  // upsert reaction
   const existing = await prisma.postReaction
     .findUnique({ where: { postId_userId: { postId, userId: user.id } } })
     .catch(() => null);
@@ -249,8 +253,9 @@ const getComments = async (postId: string, options: Ioptions = {}) => {
   });
 
   const total = await prisma.postComment.count({ where });
+  const totalPage = Math.ceil(total / Number(limit));
 
-  return { meta: { page, limit, total }, data };
+  return { meta: { page, limit, total, totalPage }, data };
 };
 
 export const updateComment = async (

@@ -1,12 +1,14 @@
 import { Router } from "express";
 import { TravelPlanController } from "./travelPlan.controller";
 import checkAuth from "../../middleware/checkAuth";
+import { multerUpload } from "../../config/multer.congig";
 
 const router = Router();
 
 router.post(
   "/create-travel-plan",
   checkAuth(),
+  multerUpload.single("imageUrl"),
   TravelPlanController.createTravelPlan
 );
 
